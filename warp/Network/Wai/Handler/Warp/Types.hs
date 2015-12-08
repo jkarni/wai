@@ -9,6 +9,7 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as S
 import Data.IORef (IORef, readIORef, writeIORef, newIORef)
 import Data.Typeable (Typeable)
+import Data.X509 (CertificateChain)
 import Data.Word (Word16, Word8)
 import Foreign.Ptr (Ptr)
 import qualified Network.Wai.Handler.Warp.Date as D
@@ -181,6 +182,7 @@ data Transport = TCP -- ^ Plain channel: TCP
                  , tlsMinorVersion :: Int
                  , tlsNegotiatedProtocol :: Maybe ByteString -- ^ The result of Application Layer Protocol Negociation in RFC 7301
                  , tlsChiperID :: Word16
+                 , tlsClientCertificate :: Maybe CertificateChain
                  }  -- ^ Encrypted channel: TLS or SSL
 
 isTransportSecure :: Transport -> Bool

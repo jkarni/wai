@@ -25,6 +25,7 @@ Library
                    , tls                           >= 1.3.2
                    , network                       >= 2.2.1
                    , streaming-commons
+                   , x509
   Exposed-modules:   Network.Wai.Handler.WarpTLS
   ghc-options:       -Wall
 

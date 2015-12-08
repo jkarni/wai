@@ -57,6 +57,7 @@ import Data.Default.Class (def)
 import qualified Data.IORef as I
 import Data.Streaming.Network (bindPortTCP, safeRecv)
 import Data.Typeable (Typeable)
+import Data.X509 (CertificateChain)
 import Network.Socket (Socket, sClose, withSocketsDo, SockAddr, accept)
 import Network.Socket.ByteString (sendAll)
 import qualified Network.TLS as TLS
@@ -264,6 +265,9 @@ runTLSSocket' tlsset@TLSSettings{..} set credential sock app =
     hooks = tlsServerHooks {
         TLS.onALPNClientSuggest = TLS.onALPNClientSuggest tlsServerHooks <|>
           (if settingsHTTP2Enabled set then Just alpn else Nothing)
+      , TLS.onClientCertificate = if tlsWantClientCert
+                                    then \ _ -> pure TLS.CertificateUsageAccept
+                                    else TLS.onClientCertificate tlsServerHooks
       }
     shared = def {
         TLS.sharedCredentials = TLS.Credentials [credential]
@@ -315,12 +319,19 @@ httpOverTls :: TLS.TLSParams params => TLSSettings -> Socket -> S.ByteString -> 
 httpOverTls TLSSettings{..} s bs0 params = do
     recvN <- makePlainReceiveN s bs0
     ctx <- TLS.contextNew (backend recvN) params
+#else
+    gen <- Crypto.Random.AESCtr.makeSystem
+    ctx <- TLS.contextNew (backend recvN) params gen
+#endif
+    clientCertIORef <- I.newIORef Nothing
     TLS.contextHookSetLogging ctx tlsLogging
+    TLS.contextHookSetCertificateRecv ctx (I.writeIORef clientCertIORef . Just)
     TLS.handshake ctx
     writeBuf <- allocateBuffer bufferSize
     -- Creating a cache for leftover input data.
     ref <- I.newIORef ""
-    tls <- getTLSinfo ctx
+    clientCertMaybe <- I.readIORef clientCertIORef
+    tls <- getTLSinfo clientCertMaybe ctx
     return (conn ctx writeBuf ref, tls)
   where
     backend recvN = TLS.Backend {
@@ -404,8 +415,8 @@ fill bs0 buf0 siz0 recv
           void $ copy buf bs1
           return (True, bs2)
 
-getTLSinfo :: TLS.Context -> IO Transport
-getTLSinfo ctx = do
+getTLSinfo :: Maybe CertificateChain -> TLS.Context -> IO Transport
+getTLSinfo clientCertMaybe ctx = do
     proto <- TLS.getNegotiatedProtocol ctx
     minfo <- TLS.contextGetInformation ctx
     case minfo of
@@ -422,6 +433,7 @@ getTLSinfo ctx = do
               , tlsMinorVersion = minor
               , tlsNegotiatedProtocol = proto
               , tlsChiperID = TLS.cipherID infoCipher
+              , tlsClientCertificate = clientCertMaybe
               }
 
 tryIO :: IO a -> IO (Either IOException a)
