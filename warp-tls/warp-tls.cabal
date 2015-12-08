@@ -26,6 +26,7 @@ Library
                    , network                       >= 2.2.1
                    , cprng-aes                     >= 0.5.0
                    , streaming-commons
+                   , x509
   Exposed-modules:   Network.Wai.Handler.WarpTLS
   ghc-options:       -Wall
 
