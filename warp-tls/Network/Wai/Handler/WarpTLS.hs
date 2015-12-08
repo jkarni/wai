@@ -37,6 +37,9 @@ module Network.Wai.Handler.WarpTLS (
     , runTLSSocket
     , runHTTP2TLS
     , runHTTP2TLSSocket
+    -- * Low level runners
+    , runServeTLS
+    , runServeTLSSocket
     -- * Exception
     , WarpTLSException (..)
     ) where
