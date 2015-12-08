@@ -4,6 +4,7 @@ packages:
 - ./wai-extra
 - ./warp
 - ./warp-tls
+- ./warp-tls/client-cert-test
 - ./wai-app-static
 - ./wai-handler-fastcgi
 - ./wai-handler-launch

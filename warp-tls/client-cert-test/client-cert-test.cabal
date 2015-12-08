@@ -1,0 +1,18 @@
+name:                client-cert-test
+version:             0.1.0.0
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable client-cert-test-exe
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                     , warp-tls
+                     , wai
+                     , http-types
+                     , warp
+                     , blaze-builder
+                     , conduit
+                     , http-conduit
+  default-language:    Haskell2010
