@@ -35,11 +35,6 @@ module Network.Wai.Handler.WarpTLS (
     -- * Runner
     , runTLS
     , runTLSSocket
-    , runHTTP2TLS
-    , runHTTP2TLSSocket
-    -- * Low level runners
-    , runServeTLS
-    , runServeTLSSocket
     -- * Exception
     , WarpTLSException (..)
     ) where
@@ -319,10 +314,6 @@ httpOverTls :: TLS.TLSParams params => TLSSettings -> Socket -> S.ByteString -> 
 httpOverTls TLSSettings{..} s bs0 params = do
     recvN <- makePlainReceiveN s bs0
     ctx <- TLS.contextNew (backend recvN) params
-#else
-    gen <- Crypto.Random.AESCtr.makeSystem
-    ctx <- TLS.contextNew (backend recvN) params gen
-#endif
     clientCertIORef <- I.newIORef Nothing
     TLS.contextHookSetLogging ctx tlsLogging
     TLS.contextHookSetCertificateRecv ctx (I.writeIORef clientCertIORef . Just)
